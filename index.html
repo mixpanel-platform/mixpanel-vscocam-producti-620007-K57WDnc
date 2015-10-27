@@ -1,15 +1,278 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/css/reset.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.css">
-    <script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js"></script>
-  </head>
-  <body class="mixpanel-platform-body">
-    <h1>Hello, World!</h1>
-    <script>
-      // Run queries and display results here
-    </script>
-  </body>
+    <script src="mixpanel-platform.min.js"></script>
+    <script src="ace/ace.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="tooltips.css">
+</head>
+
+<body class="mixpanel-platform-body">
+
+<div id="wrapper">
+<div id="editor_wrapper">
+
+    <div id="report_selector_menu">
+        <strong>Example queries:</strong><div id="reports_dropdown"></div>
+    </div>
+    <a href="https://docs.google.com/document/d/1jc291Kn_CpH2xX99oA4BBkVrZhLr3Ylz2t15L3aiSOo/edit#heading=h.pfovx9s4ubs" id="docs" target="_blank">Documentation</a>
+
+    <div id="editor">
+</div> <!-- weird formatting required for default code to look good -->
+
+    <div id="controls">
+        <table id="params_table">
+            <tr>
+                <th>
+                    Dates to query: <a href="#" data-tooltip="This controls the `from_date` and `to_date` api parameters. We will only read data between these dates (inclusive)"><img src="question_mark.png" class="tooltip_questionmark" /></a>
+                </th>
+                <td><div id="dates"></div></td>
+            </tr>
+            <!-- Getting rid of window size for now.
+            <tr>
+                <th>Days to analyze at once: <a href="#" data-tooltip="This controls the `window_size` api param. Use this to control how the query gets split up. For example, for a weekly uniques query, the smallest you can split up the query is into 7 days at a time - so you would pick 7."><img src="question_mark.png" class="tooltip_questionmark" /></th>
+                <td><div id="window_size"></div></td>
+            </tr>
+            -->
+            <tr>
+                <th>Script params: <a href="#" data-tooltip="This is a global variable `params` that will be available to your script. This lets your scripts be flexible. For example, if you were writing Segmentation, you might add an 'event_name' parameter and filter for `if (event.name == params.event_name)` to your script."><img src="question_mark.png" class="tooltip_questionmark" /></a></th>
+                <td><input type="text" id="script_params" /></td>
+            </tr>
+        </table>
+        <button id="run_button">Run query</button>
+        <div style="clear: both"></div>
+    </div>
+</div>
+
+<br />
+
+<div id="output"></div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        var editor = ace.edit("editor");
+        editor.setTheme("ace/theme/textmate");
+        editor.getSession().setMode("ace/mode/javascript");
+        editor.setOptions({
+            maxLines: 20
+        });
+
+        $("#dates").MPDatepicker();
+        /*
+        $("#window_size").MPSelect({
+            items: _.map(
+                _.range(1, 32),
+                function(i) {
+                    return {'value': i, 'label': i.toString() };
+                }
+            )
+        });
+        */
+
+        var set_editor_contents = function(query_name) {
+            var script = $("#" + query_name + "_query").html();
+            var params = JSON.parse($("#" + query_name + "_params").html());
+
+            editor.setValue($.trim(script), -1);
+            var params_string = JSON.stringify(params.params);
+            $("#script_params").val(params_string);
+            $("#script_params").css('width', params_string.length * 8.3);
+
+            $("#output").html('').css('visibility', 'hidden');
+        };
+
+        set_editor_contents("default");
+
+        $("#reports_dropdown").MPSelect({
+            items: [
+                { 'value': 'default', 'label': 'Simple query' },
+                { 'value': 'funnel', 'label': 'Funnel query' },
+                { 'value': 'flow', 'label': 'Flow query' },
+            ]
+        });
+
+        $("#reports_dropdown").change(function(e, val) {
+            set_editor_contents(val);
+        });
+
+        function date_to_string(d) {
+            return d.toISOString().split('T')[0];
+        }
+
+        function set_output(formatted) {
+            $("#output").html(
+                $("<pre>").html(formatted)
+            );
+        }
+
+        $("#run_button").on('click', function() {
+            // Show spinner while running query
+            $("#output").html(
+                $("<div class='spinner_wrapper'>").append(
+                    $("<img src='ajax-loader-big.gif' />")
+                )
+            );
+            $("#output").css('visibility', 'visible');
+
+            // Make query
+            var dates = $("#dates").val();
+            var params = {
+                "from_date": date_to_string(dates.from),
+                "to_date": date_to_string(dates.to),
+                //"window_size": $("#window_size").val(),
+                "params": $("#script_params").val()
+            };
+            console.log(params)
+            MP.api.custom_query(editor.getValue(), params)
+                .done(function(resp) {
+                    var stringified = JSON.stringify(resp.results, undefined, 2);
+                    set_output(stringified);
+                })
+                .fail(function($xhr) {
+                    // linter errors come as text
+                    var error = $xhr.request.responseJSON.error;
+                    try {
+                        // runtime errors come as a json blob
+                        error = JSON.parse(error).error;
+                    } catch (err) {}
+                    set_output(error);
+                });
+        });
+    });
+</script>
+
+<script type="text/cq" id="default_query">
+function main() {
+  return Events({
+    start_date: ‘2015-09-01’,
+    end_date: ‘2015-09-30’,
+  })
+  .groupBy([“$referring_domain”], mixpanel.count_reducer)
+  .reduce(mixpanel.top_values_reducer(10));
+}
+</script>
+<script type="text/cq" id="default_params">
+{"params":{"first_letter": "v"}}
+</script>
+
+<script type="text/cq" id="flow_query">
+// TODO: replace me with new example
+var result = {};
+
+var processEvent = function(event, user) {
+    // user only exists if there is a distinct id on the event
+    if (user) {
+        user.state = user.state || { events: [] };
+        if (event.name == params.first_event) {
+            user.state.include = true;
+        }
+        if (user.state.include) {
+            if (user.state.events.length < params.max_depth) {
+                user.state.events.push({ 'name': event.name, 'time': event.time });
+            }
+        }
+    }
+};
+
+var processUser = function(user) {
+    if (user.state) {
+        var r = result;
+        for (var i = 0; i < user.state.events.length; i++) {
+            var e = user.state.events[i];
+
+            if (i > 0 && e.time > (user.state.events[i - 1].time + 30 * 60)) { // 30 mins have passed
+                // skip ahead to next instance of `first_event`
+                while (1) {
+                    if (e.name == params.first_event) {
+                        break;
+                    }
+                    ++i;
+                    if (i == user.state.events.length) {
+                        // reached the end of the events list without finding the event again
+                        return;
+                    }
+                    e = user.state.events[i];
+                    r = result;
+                }
+            }
+
+            r[e.name] = r[e.name] || {'count': 0, 'next': {}};
+            r[e.name].count++;
+            r = r[e.name].next;
+        }
+    }
+};
+</script>
+<script type="text/cq" id="flow_params">
+{"params": {"first_event": "homepage new", "max_depth": 5}}
+</script>
+
+<script type="text/cq" id="funnel_query">
+/*
+    Funnel steps for this query are defined in the script params -- see below!
+*/
+var HOUR  = 60 * 60 * 1000; // in milliseconds
+var DAY   = 24 * HOUR;
+var WEEK  = 7 * DAY;
+var MONTH = 30 * DAY;
+
+var result = {};
+
+var processEvent = function(event, user) {
+    if (user) {
+        user.state = user.state || { steps: [] };
+        for (var i = 0; i < params.steps.length; i++) {
+            if (event.name === params.steps[i] && !user.state.steps[i]) {
+                if (i === 0) {
+                    // We can go ahead and record the first event as soon as we see it
+                    user.state.steps[i] = event.time;
+                } else if (
+                    user.state.steps[i - 1] && 
+                    ((user.state.steps[0].getTime() + HOUR) > event.time.getTime())
+                ) {
+                    // Otherwise, confirm that we've seen the previous step, and that we haven't gone
+                    // too long since the first event in the funnel.
+                    user.state.steps[i] = event.time;
+                }
+            }
+        }
+    }
+};
+
+var processUser = function(user) {
+    if (user.state && user.state.steps.length) {
+        var day = _to_date_string(user.state.steps[0]);
+        result[day] = result[day] || _initialize_result_for_day();
+        for (var i = 0; i < user.state.steps.length; i++) {
+            result[day][i].count++;
+            if (i > 0) {
+                var time_delta = user.state.steps[i] - user.state.steps[i - 1];
+                result[day][i].sum_of_time_deltas += time_delta;
+            }
+        }
+    }
+};
+
+var _to_date_string = function(ts) {
+    var date = new Date(ts);
+    return date.toISOString().split('T')[0];
+};
+
+var _initialize_result_for_day = function() {
+    var day_result = {};
+    for (var i = 0; i < params.steps.length; i++) {
+        day_result[i] = { count: 0, sum_of_time_deltas: 0 };
+    }
+    return day_result;
+};
+</script>
+<script type="text/cq" id="funnel_params">
+{"params": {"steps": ["homepage new", "View signup", "Viewed report"]}}
+</script>
+
+</body>
 </html>
