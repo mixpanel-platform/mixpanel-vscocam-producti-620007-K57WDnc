@@ -147,68 +147,50 @@
 
 <script type="text/cq" id="default_query">
 function main() {
-  return Events({
-    start_date: ‘2015-09-01’,
-    end_date: ‘2015-09-30’,
-  })
-  .groupBy([“$referring_domain”], mixpanel.count_reducer)
-  .reduce(mixpanel.top_values_reducer(10));
+    return Events({})
+    .filter(function(event) { return event["name"] == "$signup"; })
+    .groupBy(['mp_country_code'], function(accumulators, items) {
+        var ret = items.length;
+        for (var i = 0; i < accumulators.length; ++i) {
+            ret += accumulators[i];
+        }
+        return ret;
+    });
 }
 </script>
 <script type="text/cq" id="default_params">
-{"params":{"first_letter": "v"}}
+{"params":{}}
 </script>
 
-<script type="text/cq" id="flow_query">
-// TODO: replace me with new example
-var result = {};
-
-var processEvent = function(event, user) {
-    // user only exists if there is a distinct id on the event
-    if (user) {
-        user.state = user.state || { events: [] };
-        if (event.name == params.first_event) {
-            user.state.include = true;
-        }
-        if (user.state.include) {
-            if (user.state.events.length < params.max_depth) {
-                user.state.events.push({ 'name': event.name, 'time': event.time });
-            }
-        }
-    }
-};
-
-var processUser = function(user) {
-    if (user.state) {
-        var r = result;
-        for (var i = 0; i < user.state.events.length; i++) {
-            var e = user.state.events[i];
-
-            if (i > 0 && e.time > (user.state.events[i - 1].time + 30 * 60)) { // 30 mins have passed
-                // skip ahead to next instance of `first_event`
-                while (1) {
-                    if (e.name == params.first_event) {
-                        break;
-                    }
-                    ++i;
-                    if (i == user.state.events.length) {
-                        // reached the end of the events list without finding the event again
-                        return;
-                    }
-                    e = user.state.events[i];
-                    r = result;
+<script type="text/cq" id="top_email_providers">
+function main() {
+    return Events({})
+        .groupBy([function(event) {
+                email = event["Email"];
+                if (!email) return undefined;
+                pos = email.indexOf('@');
+                if (pos < 0) return undefined;
+                return email.substr(pos + 1);
+            }],
+            function(accumulators, items) {
+                var ret = items.length;
+                for (var i = 0; i < accumulators.length; ++i) {
+                    ret += accumulators[i];
                 }
+                return ret;
+            })
+        .reduce(function(accumulators, items) {
+            var ret = items;
+            for (var i = 0; i < accumulators.length; ++i) {
+                ret = ret.concat(accumulators[i]);
             }
-
-            r[e.name] = r[e.name] || {'count': 0, 'next': {}};
-            r[e.name].count++;
-            r = r[e.name].next;
-        }
-    }
-};
+            ret.sort(function(a,b) { return b.value - a.value; });
+            return ret.slice(0, 10);
+        });
+}
 </script>
 <script type="text/cq" id="flow_params">
-{"params": {"first_event": "homepage new", "max_depth": 5}}
+{"params": {}}
 </script>
 
 <script type="text/cq" id="funnel_query">
