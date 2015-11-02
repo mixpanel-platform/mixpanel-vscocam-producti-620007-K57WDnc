@@ -73,9 +73,10 @@
 
         $("#reports_dropdown").MPSelect({
             items: [
-                { 'value': 'default', 'label': 'Simple query' },
-                { 'value': 'funnel', 'label': 'Funnel query' },
-                { 'value': 'flow', 'label': 'Flow query' },
+                { 'value': 'groupby', 'label': 'Simple groupBy' },
+                { 'value': 'top_email_providers', 'label': 'Top email providers' },
+                { 'value': 'max_pixels', 'label': 'Max pixels' },
+                { 'value': 'map_exception', 'label': 'map() exception' },
             ]
         });
 
@@ -128,7 +129,7 @@
     });
 </script>
 
-<script type="text/cq" id="default_query">
+<script type="text/cq" id="groupby_query">
 function main() {
     return Events({})
     .filter(function(event) { return event["name"] == "$signup"; })
@@ -141,11 +142,11 @@ function main() {
     });
 }
 </script>
-<script type="text/cq" id="default_params">
+<script type="text/cq" id="groupby_params">
 {"params":{}}
 </script>
 
-<script type="text/cq" id="top_email_providers">
+<script type="text/cq" id="top_email_providers_query">
 function main() {
     return Events({})
         .groupBy([function(event) {
@@ -172,72 +173,44 @@ function main() {
         });
 }
 </script>
-<script type="text/cq" id="flow_params">
+<script type="text/cq" id="top_email_providers_params">
 {"params": {}}
 </script>
 
-<script type="text/cq" id="funnel_query">
-/*
-    Funnel steps for this query are defined in the script params -- see below!
-*/
-var HOUR  = 60 * 60 * 1000; // in milliseconds
-var DAY   = 24 * HOUR;
-var WEEK  = 7 * DAY;
-var MONTH = 30 * DAY;
-
-var result = {};
-
-var processEvent = function(event, user) {
-    if (user) {
-        user.state = user.state || { steps: [] };
-        for (var i = 0; i < params.steps.length; i++) {
-            if (event.name === params.steps[i] && !user.state.steps[i]) {
-                if (i === 0) {
-                    // We can go ahead and record the first event as soon as we see it
-                    user.state.steps[i] = event.time;
-                } else if (
-                    user.state.steps[i - 1] && 
-                    ((user.state.steps[0].getTime() + HOUR) > event.time.getTime())
-                ) {
-                    // Otherwise, confirm that we've seen the previous step, and that we haven't gone
-                    // too long since the first event in the funnel.
-                    user.state.steps[i] = event.time;
+<script type="text/cq" id="max_pixels_query">
+function main() {
+    return Events({}).reduce(
+        function(accumulators, events) {
+            var ret = { height : 0, width: 0, total: 0};
+            for (var i = 0; i < accumulators.length; ++i) {
+                if (accumulators[i].total > ret.total) {
+                    ret = accumulators[i];
                 }
             }
-        }
-    }
-};
-
-var processUser = function(user) {
-    if (user.state && user.state.steps.length) {
-        var day = _to_date_string(user.state.steps[0]);
-        result[day] = result[day] || _initialize_result_for_day();
-        for (var i = 0; i < user.state.steps.length; i++) {
-            result[day][i].count++;
-            if (i > 0) {
-                var time_delta = user.state.steps[i] - user.state.steps[i - 1];
-                result[day][i].sum_of_time_deltas += time_delta;
+            for (var i = 0; i < events.length; ++i) {
+                var w = events[i]["$screen_width"];
+                var h = events[i]["$screen_height"];
+                if (w * h > ret.total) {
+                    ret = { height : h, width : w, total : w * h};
+                }
             }
-        }
-    }
-};
-
-var _to_date_string = function(ts) {
-    var date = new Date(ts);
-    return date.toISOString().split('T')[0];
-};
-
-var _initialize_result_for_day = function() {
-    var day_result = {};
-    for (var i = 0; i < params.steps.length; i++) {
-        day_result[i] = { count: 0, sum_of_time_deltas: 0 };
-    }
-    return day_result;
-};
+            return ret;
+        });
+}
 </script>
-<script type="text/cq" id="funnel_params">
-{"params": {"steps": ["homepage new", "View signup", "Viewed report"]}}
+<script type="text/cq" id="max_pixels_params">
+{"params": {}}
 </script>
+
+<script type="text/cq" id="map_exception_query">
+function main() {
+    return Events({}).map(function(item) { throw "Hello!"; });
+}
+</script>
+<script type="text/cq" id="map_exception_params">
+{"params": {}}
+</script>
+
 
 </body>
 </html>
