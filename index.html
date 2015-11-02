@@ -69,14 +69,14 @@
             $("#output").html('').css('visibility', 'hidden');
         };
 
-        set_editor_contents("default");
+        set_editor_contents("groupby");
 
         $("#reports_dropdown").MPSelect({
             items: [
                 { 'value': 'groupby', 'label': 'Simple groupBy' },
                 { 'value': 'top_email_providers', 'label': 'Top email providers' },
                 { 'value': 'max_pixels', 'label': 'Max pixels' },
-                { 'value': 'map_exception', 'label': 'map() exception' },
+                { 'value': 'map_exception', 'label': 'map() exception' }
             ]
         });
 
