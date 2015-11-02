@@ -112,7 +112,7 @@
             console.log(params)
             MP.api.custom_query(editor.getValue(), params)
                 .done(function(resp) {
-                    var stringified = JSON.stringify(resp.results, undefined, 2);
+                    var stringified = JSON.stringify(resp, undefined, 2);
                     set_output(stringified);
                 })
                 .fail(function($xhr) {
