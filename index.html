@@ -31,12 +31,6 @@
                 </th>
                 <td><div id="dates"></div></td>
             </tr>
-            <!-- Getting rid of window size for now.
-            <tr>
-                <th>Days to analyze at once: <a href="#" data-tooltip="This controls the `window_size` api param. Use this to control how the query gets split up. For example, for a weekly uniques query, the smallest you can split up the query is into 7 days at a time - so you would pick 7."><img src="question_mark.png" class="tooltip_questionmark" /></th>
-                <td><div id="window_size"></div></td>
-            </tr>
-            -->
             <tr>
                 <th>Script params: <a href="#" data-tooltip="This is a global variable `params` that will be available to your script. This lets your scripts be flexible. For example, if you were writing Segmentation, you might add an 'event_name' parameter and filter for `if (event.name == params.event_name)` to your script."><img src="question_mark.png" class="tooltip_questionmark" /></a></th>
                 <td><input type="text" id="script_params" /></td>
@@ -62,16 +56,6 @@
         });
 
         $("#dates").MPDatepicker();
-        /*
-        $("#window_size").MPSelect({
-            items: _.map(
-                _.range(1, 32),
-                function(i) {
-                    return {'value': i, 'label': i.toString() };
-                }
-            )
-        });
-        */
 
         var set_editor_contents = function(query_name) {
             var script = $("#" + query_name + "_query").html();
@@ -123,7 +107,6 @@
             var params = {
                 "from_date": date_to_string(dates.from),
                 "to_date": date_to_string(dates.to),
-                //"window_size": $("#window_size").val(),
                 "params": $("#script_params").val()
             };
             console.log(params)
