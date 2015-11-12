@@ -119,11 +119,14 @@
                 .fail(function($xhr) {
                     // linter errors come as text
                     var error = $xhr.request.responseJSON.error;
+                    var error_text = "";
                     try {
-                        // runtime errors come as a json blob
-                        error = JSON.parse(error).error;
-                    } catch (err) {}
-                    set_output(error);
+                        // runtime errors can come as a json blob
+                        error_text = JSON.parse(error).error;
+                    } catch (err) { 
+                        error_text = error;
+                    }
+                    set_output(error_text);
                 });
         });
     });
