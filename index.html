@@ -117,7 +117,16 @@
                     set_output(stringified);
                 })
                 .fail(function($xhr) {
-                    set_output($xhr.error);
+                    // linter errors come as text
+                    var error = $xhr.request.responseJSON.error;
+                    var error_text = "";
+                    try {
+                        // runtime errors can come as a json blob
+                        error_text = JSON.parse(error).error;
+                    } catch (err) { 
+                        error_text = error;
+                    }
+                    set_output(error_text);
                 });
         });
     });
