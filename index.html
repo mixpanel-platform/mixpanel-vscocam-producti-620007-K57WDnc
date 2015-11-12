@@ -117,14 +117,13 @@
                     set_output(stringified);
                 })
                 .fail(function($xhr) {
-                    // linter errors come as text
-                    var error = $xhr.request.responseJSON.error;
-                    var error_text = "";
+                    // Somehow the request is not parsed into JSON event with application/json header
+                    var error = $xhr.request.responseText;
+                    var error_text = "Requst failed";
                     try {
-                        // runtime errors can come as a json blob
                         error_text = JSON.parse(error).error;
                     } catch (err) { 
-                        error_text = error;
+                        error_text = $xhr.request.responseText;
                     }
                     set_output(error_text);
                 });
