@@ -33,7 +33,7 @@
             </tr>
             <tr>
                 <th>Script params: <a href="#" data-tooltip="This is a global variable `params` that will be available to your script. This lets your scripts be flexible. For example, if you were writing Segmentation, you might add an 'event_name' parameter and filter for `if (event.name == params.event_name)` to your script."><img src="question_mark.png" class="tooltip_questionmark" /></a></th>
-                <td><textarea type="text" id="script_params" rows="5"></textarea></td>
+                <td><textarea type="text" id="script_params" rows="5" columns="20"></textarea></td>
             </tr>
         </table>
         <button id="run_button">Run query</button>
@@ -62,9 +62,9 @@
             var params = JSON.parse($("#" + query_name + "_params").html());
 
             editor.setValue($.trim(script), -1);
-            var params_string = JSON.stringify(params.params);
+            var params_string = JSON.stringify(params.params, null, '  ');
             $("#script_params").val(params_string);
-            $("#script_params").css('width', params_string.length * 8.3);
+            //$("#script_params").css('width', params_string.length * 8.3);
 
             $("#output").html('').css('visibility', 'hidden');
         };
