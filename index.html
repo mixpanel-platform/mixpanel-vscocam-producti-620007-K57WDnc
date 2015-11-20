@@ -58,8 +58,8 @@
         $("#dates").MPDatepicker();
         $("#dates").on('change', function(e, dates){
             var params = JSON.parse($("#script_params").val());
-            params.params.from_date = dates.from;
-            params.params.to_date = dates.to;
+            params.from_date = dates.from;
+            params.to_date = dates.to;
 
             var params_string = JSON.stringify(params.params, null, '  ');
             $("#script_params").val(params_string);
@@ -70,7 +70,7 @@
             var params = JSON.parse($("#" + query_name + "_params").html());
 
             editor.setValue($.trim(script), -1);
-            var params_string = JSON.stringify(params.params, null, '  ');
+            var params_string = JSON.stringify(params, null, '  ');
             $("#script_params").val(params_string);
             //$("#script_params").css('width', params_string.length * 8.3);
 
@@ -278,10 +278,10 @@ function mergeInPlace(d1, d2) {
 </script>
 
 <script type="text/cq" id="flow_params">
-{"params": { 
+{
     "first_event": "homepage new",
     "max_depth": 4
-}}
+}
 </script>
 
 
