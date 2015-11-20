@@ -57,7 +57,7 @@
 
         $("#dates").MPDatepicker();
         $("#dates").on('change', function(e, dates){
-            var params = JSON.parse($("#script_params").val();
+            var params = JSON.parse($("#script_params").val());
             params.params.from_date = dates.from;
             params.params.to_date = dates.to;
 
