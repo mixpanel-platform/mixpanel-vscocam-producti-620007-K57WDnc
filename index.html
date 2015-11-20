@@ -18,7 +18,7 @@
     <div id="report_selector_menu">
         <strong>Example queries:</strong><div id="reports_dropdown"></div>
     </div>
-    <a href="https://docs.google.com/document/d/1jc291Kn_CpH2xX99oA4BBkVrZhLr3Ylz2t15L3aiSOo/edit#heading=h.pfovx9s4ubs" id="docs" target="_blank">Documentation</a>
+    <a href="https://docs.google.com/document/d/1nYOUxdPrMXmiKMwMksXIZknCbxjFFHi9n8iS0q37Ivs/edit#heading=h.dfzdd27m7eqs" id="docs" target="_blank">Documentation</a>
 
     <div id="editor">
 </div> <!-- weird formatting required for default code to look good -->
@@ -76,7 +76,8 @@
                 { 'value': 'groupby', 'label': 'Simple groupBy' },
                 { 'value': 'top_email_providers', 'label': 'Top email providers' },
                 { 'value': 'max_pixels', 'label': 'Max pixels' },
-                { 'value': 'map_exception', 'label': 'map() exception' }
+                { 'value': 'map_exception', 'label': 'map() exception' },
+                { 'value': 'flow', 'label': 'Flow' }
             ]
         });
 
@@ -210,6 +211,70 @@ function main() {
 }
 </script>
 <script type="text/cq" id="map_exception_params">
+{"params": {}}
+</script>
+
+<script type="text/cq" id="flow_query">
+var params = {
+    first_event: "homepage new",
+    max_depth: 4
+}
+
+var main = function() {
+    return Events({})
+    .groupByUser(function(flow, events) {
+        flow = flow || { depth: 0 };
+        flow.current = flow.current || flow;
+        for (var i = 0; i < events.length; i++) {
+            var e = events[i];
+            if (flow.depth === 0 && e.name != params.first_event) {
+                continue;
+            }
+            if (flow.depth === params.max_depth) {
+                return flow;
+            }
+            flow.depth++;
+            flow.current[e.name] =
+                flow.current[e.name] || {'count': 0, 'next': {}};
+
+            flow.current[e.name].count++;
+            flow.current = flow.current[e.name].next;
+        }
+        return flow;
+    })
+    .reduce(function(accumulators, items) {
+        var result = {};
+        for (var i = 0; i < accumulators.length; i++) {
+            mergeInPlace(result, accumulators[i]);
+        }
+        for (var i = 0; i < items.length; i++) {
+            delete items[i].value.depth;
+            delete items[i].value.current;
+            mergeInPlace(result, items[i].value);
+        }
+        return result;
+    });
+};
+
+function mergeInPlace(d1, d2) {
+    for (var key in d2) {
+        var v1 = d1[key],
+            v2 = d2[key];
+
+        if (!(key in d1)) {
+            d1[key] = v2;
+        } else if (typeof v1 === "number" && typeof v2 === "number") {
+            d1[key] += v2;
+        } else if (typeof v1 === "object" && typeof v2 === "object") {
+            mergeInPlace(v1, v2);
+        } else {
+            throw "mismatched types for key: " + key;
+        }
+    }
+}
+</script>
+
+<script type="text/cq" id="flow_params">
 {"params": {}}
 </script>
 
