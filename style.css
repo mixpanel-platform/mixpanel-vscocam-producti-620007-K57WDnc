@@ -25,7 +25,7 @@ h1 {
 }
 
 #editor {
-    min-height: 100px; 
+    min-height: 100px;
     width: 100%;
 }
 
@@ -81,8 +81,8 @@ h1 {
 #script_params {
     display: block;
     box-sizing: border-box;
-    min-width: 220px;
-    min-height: 34px;
+    min-width: 440px;
+    min-height: 70px;
     font-size: 13px;
     color: #000;
     border: 1px solid #bdc7d2;
