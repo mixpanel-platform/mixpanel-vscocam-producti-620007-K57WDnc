@@ -55,14 +55,23 @@
             maxLines: 20
         });
 
-        $("#dates").MPDatepicker();
-        $("#dates").on('change', function(e, dates){
+        function date_to_string(d) {
+            return d.toISOString().split('T')[0];
+        }
+        
+        function add_date_range_to_params(from, to) {
             var params = JSON.parse($("#script_params").val());
-            params.from_date = dates.from;
-            params.to_date = dates.to;
+            params.from_date = date_to_string(from);
+            params.to_date = date_to_string(to);
 
             var params_string = JSON.stringify(params, null, '  ');
             $("#script_params").val(params_string);
+        }
+
+        $("#dates").MPDatepicker();
+        
+        $("#dates").on('change', function(e, dates){
+            add_date_range_to_params(dates.from, dates.to);
         })
 
         var set_editor_contents = function(query_name) {
@@ -72,6 +81,7 @@
             editor.setValue($.trim(script), -1);
             var params_string = JSON.stringify(params, null, '  ');
             $("#script_params").val(params_string);
+            add_date_range_to_params(dates.val().from, dates.val().to);
             //$("#script_params").css('width', params_string.length * 8.3);
 
             $("#output").html('').css('visibility', 'hidden');
@@ -92,10 +102,6 @@
         $("#reports_dropdown").change(function(e, val) {
             set_editor_contents(val);
         });
-
-        function date_to_string(d) {
-            return d.toISOString().split('T')[0];
-        }
 
         function set_output(formatted) {
             $("#output").html(
