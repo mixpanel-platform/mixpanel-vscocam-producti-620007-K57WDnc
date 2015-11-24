@@ -81,6 +81,7 @@
             editor.setValue($.trim(script), -1);
             var params_string = JSON.stringify(params, null, '  ');
             $("#script_params").val(params_string);
+            var dates = $("#dates").val();
             add_date_range_to_params(dates.val().from, dates.val().to);
             //$("#script_params").css('width', params_string.length * 8.3);
 
