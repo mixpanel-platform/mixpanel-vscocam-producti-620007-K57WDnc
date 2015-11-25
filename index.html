@@ -58,7 +58,7 @@
         function date_to_string(d) {
             return d.toISOString().split('T')[0];
         }
-        
+
         function add_date_range_to_params(from, to) {
             var params = JSON.parse($("#script_params").val());
             params.from_date = date_to_string(from);
@@ -69,7 +69,7 @@
         }
 
         $("#dates").MPDatepicker();
-        
+
         $("#dates").on('change', function(e, dates){
             add_date_range_to_params(dates.from, dates.to);
         })
@@ -138,7 +138,7 @@
                     var error_text = "Requst failed";
                     try {
                         error_text = JSON.parse(error).error;
-                    } catch (err) { 
+                    } catch (err) {
                         error_text = $xhr.request.responseText;
                     }
                     set_output(error_text);
@@ -281,6 +281,44 @@ function mergeInPlace(d1, d2) {
             throw "mismatched types for key: " + key;
         }
     }
+}
+</script>
+
+<script type="text/cq" id="getting_started_example">
+function main() {
+  // Take all events in the given date range.
+  return Events({
+    from_date: params.from_date,
+    to_date: params.to_date,
+  })
+  // Group them by user distinct_id, and call the provided function.
+  .groupByUser(function(state, events) {
+      state = state || {
+        last_day_active: new Date(0),
+        num_days_active: 0,
+        city: events[0]['$city'],
+      };
+      for (var i = 0; i < events.length; ++i) {
+        var event_time = new Date(events[i]['time'] * 1000);
+        var event_day = new Date(1900 + event_time.getYear(),
+                                 event_time.getMonth(),
+                                 event_time.getDate());
+        if (event_day > state.last_day_active) {
+          ++state.num_days_active;
+          state.last_day_active = event_day;
+        }
+      }
+      return state;
+    })
+  // Only keep entries where num_days_active property is at least 5.
+  .filter(function(item) { return item.value.num_days_active >= 5; })
+  .groupBy([function(item){return item.value.city;}], function(accumulators, items){
+      var ret = items.length;
+      for (var i = 0; i < accumulators.length; ++i) {
+        ret += accumulators[i];
+      }
+      return ret;
+  });
 }
 </script>
 
