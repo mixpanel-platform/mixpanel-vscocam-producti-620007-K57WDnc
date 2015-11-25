@@ -93,6 +93,7 @@
         $("#reports_dropdown").MPSelect({
             items: [
                 { 'value': 'getting_started', 'label': 'Getting Started'},
+                { 'value': 'segmentation', 'label': 'Segmentation'},
                 { 'value': 'groupby', 'label': 'Simple groupBy' },
                 { 'value': 'top_email_providers', 'label': 'Top email providers' },
                 { 'value': 'max_pixels', 'label': 'Max pixels' },
@@ -318,7 +319,7 @@ function main() {
       };
       for (var i = 0; i < events.length; ++i) {
         var event_time = new Date(events[i]['time'] * 1000);
-        var event_day = new Date(1900 + event_time.getYear(),
+        var event_day = new Date(event_time.getFullYear(),
                                  event_time.getMonth(),
                                  event_time.getDate());
         if (event_day > state.last_day_active) {
@@ -359,6 +360,123 @@ function main() {
 <script type="text/cq" id="top_events_params">
 {
 }
+</script>
+
+<script type="text/cq" id="segmentation_query">
+function main() {
+    var event_name = params.event_name;
+    var unit = params.unit || "day";
+    var type = params.type || "total";
+    var segment = params.segment || "";
+
+    if (!event_name) {
+        throw "event_name is a required param";
+    }
+    if (["hour", "day", "week", "month", "quarter"].indexOf(unit) == -1) {
+        throw "invalid unit";
+    }
+    if (["total", "unique"].indexOf(type) == -1) {
+        throw "invalid type";
+    }
+
+    var groupKeys = [get_date_key(unit)];
+    if (segment) {
+        groupKeys.push(segment);
+    }
+
+    if (type == "unique") {
+        return Events({
+            from_date: params.from_date,
+            to_date: params.to_date
+        })
+        .filter(function(e) { return e["name"] == event_name })
+        .groupByUser(groupKeys, function(state, events) {
+            return 1;
+        })
+        .groupBy([function(row) { return row.key.slice(1) }], function(accumulators, users) {
+            var ret = 0;
+            for (var j = 0; j < users.length; j++) {
+                ret += users[j].value;
+            }
+            for (var i = 0; i < accumulators.length; i++) {
+                ret += accumulators[i];
+            }
+            return ret;
+        });
+    } else if (type == "total") {
+        return Events({
+            from_date: params.from_date,
+            to_date: params.to_date
+        })
+        .filter(function(e) { return e["name"] == event_name })
+        .groupBy(groupKeys, function(accumulators, events) {
+            var count = 0;
+            for (var i = 0; i < accumulators.length; i++) {
+                count += accumulators[i];
+            }
+            return count + events.length;
+        });
+    }
+}
+
+function get_date_key(unit) {
+    switch (unit) {
+        case "hour":
+            return function(e) { 
+                var d = new Date(e.time * 1000);
+                d.setMinutes(0);
+                d.setSeconds(0);
+                d.setMilliseconds(0);
+                return d.toISOString();
+            };
+        case "day":
+            return function(e) { 
+                var d = new Date(e.time * 1000);
+                d.setHours(0);
+                d.setMinutes(0);
+                d.setSeconds(0);
+                d.setMilliseconds(0);
+                return d.toISOString().split("T")[0];
+            };
+        case "week":
+            return function(e) {
+                var d = new Date(e.time * 1000);
+                var day = d.getDate(),
+                    month = d.getMonth(),
+                    year = d.getFullYear(),
+                    weekday = d.getDay() || 7;
+
+                return (new Date(year, month, day - (weekday - 1))).toISOString().split("T")[0];
+            };
+        case "month":
+            return function(e) {
+                var d = new Date(e.time * 1000);
+                d.setDate(1);
+                d.setHours(0);
+                d.setMinutes(0);
+                d.setSeconds(0);
+                d.setMilliseconds(0);
+                return d.toISOString().split("T")[0];
+            };
+        case "quarter":
+            return function(e) {
+                var d = new Date(e.time * 1000);
+                d.setMonth(d.getMonth() - d.getMonth() % 3);
+                d.setDate(1);
+                d.setHours(0);
+                d.setMinutes(0);
+                d.setSeconds(0);
+                d.setMilliseconds(0);
+                return d.toISOString().split("T")[0];
+            };
+        default:
+            throw "invalid unit";
+    }
+}
+
+</script>
+<script type="text/cq" id="segmentation_params">
+{"event_name": "Viewed report", "unit": "day", "type": "total", "segment": ""}
 </script>
 
 </body>
