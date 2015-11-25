@@ -83,7 +83,6 @@
             $("#script_params").val(params_string);
             var dates = $("#dates").val();
             add_date_range_to_params(dates.from, dates.to);
-            //$("#script_params").css('width', params_string.length * 8.3);
 
             $("#output").html('').css('visibility', 'hidden');
         };
@@ -97,7 +96,7 @@
                 { 'value': 'groupby', 'label': 'Simple groupBy' },
                 { 'value': 'top_email_providers', 'label': 'Top email providers' },
                 { 'value': 'max_pixels', 'label': 'Max pixels' },
-                { 'value': 'map_exception', 'label': 'map() exception' },
+                { 'value': 'map_exception', 'label': 'Exception in transformation' },
                 { 'value': 'flow', 'label': 'Flow' },
                 { 'value': 'top_events', 'label': 'Your Top Events' },
             ]
@@ -156,7 +155,7 @@ function main() {
         from_date: params.from_date,
         to_date: params.to_date,
     })
-    .filter(function(event) { return event["name"] == "$signup"; })
+    .filter(function(event) { return event["name"] == params.event; })
     .groupBy(['mp_country_code'], function(accumulators, items) {
         var ret = items.length;
         for (var i = 0; i < accumulators.length; ++i) {
@@ -167,7 +166,9 @@ function main() {
 }
 </script>
 <script type="text/cq" id="groupby_params">
-{}
+{
+  "event":"$signup"
+}
 </script>
 
 <script type="text/cq" id="top_email_providers_query">
@@ -176,6 +177,7 @@ function main() {
         from_date: params.from_date,
         to_date: params.to_date,
     })
+    // Group by email domain
     .groupBy([function(event) {
             email = event["Email"];
             if (!email) return undefined;
@@ -190,6 +192,7 @@ function main() {
             }
             return ret;
         })
+    // Sort by cound and extract top 10    
     .reduce(function(accumulators, items) {
         var ret = items;
         for (var i = 0; i < accumulators.length; ++i) {
@@ -237,7 +240,10 @@ function main() {
     return Events({
         from_date: params.from_date,
         to_date: params.to_date,
-    }).map(function(item) { throw "Hello!"; });
+    }).map(function(item) {
+      // The message will appear in the console
+      throw "Something bad just happened!"; 
+    });
 }
 </script>
 <script type="text/cq" id="map_exception_params">
@@ -353,7 +359,9 @@ function main() {
     from_date: params.from_date,
     to_date: params.to_date,
   })
+  // Count all events
   .groupBy(['name'], mixpanel.reducer.count())
+  // And return top 10 of them
   .reduce(mixpanel.reducer.top(10));
 }
 </script>
@@ -363,6 +371,7 @@ function main() {
 </script>
 
 <script type="text/cq" id="segmentation_query">
+// Default segmentation query implementation
 function main() {
     var event_name = params.event_name;
     var unit = params.unit || "day";
