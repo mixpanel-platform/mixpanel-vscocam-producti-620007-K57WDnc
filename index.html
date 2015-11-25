@@ -329,13 +329,7 @@ function main() {
     })
   // Only keep entries where num_days_active property is at least 5.
   .filter(function(item) { return item.value.num_days_active >= 5; })
-  .groupBy([function(item){return item.value.city;}], function(accumulators, items){
-      var ret = items.length;
-      for (var i = 0; i < accumulators.length; ++i) {
-        ret += accumulators[i];
-      }
-      return ret;
-  });
+  .groupBy([function(item){return item.value.city;}], mixpanel.reducer.count());
 }
 </script>
 
