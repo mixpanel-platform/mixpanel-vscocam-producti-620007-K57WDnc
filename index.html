@@ -98,6 +98,7 @@
                 { 'value': 'max_pixels', 'label': 'Max pixels' },
                 { 'value': 'map_exception', 'label': 'map() exception' },
                 { 'value': 'flow', 'label': 'Flow' }
+                { 'value': 'top_events', 'label': 'Your Top Events' }
             ]
         });
 
@@ -345,6 +346,20 @@ function main() {
 }
 </script>
 
+<script type="text/cq" id="top_events_query">
+function main() {
+  return Events({
+    from_date: params.from_date,
+    to_date: params.to_date,
+  })
+  .groupBy(['name'], mixpanel.reducer.count())
+  .reduce(mixpanel.reducer.top(10));
+}
+</script>
+<script type="text/cq" id="top_events_params">
+{
+}
+</script>
 
 </body>
 </html>
