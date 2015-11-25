@@ -92,6 +92,7 @@
 
         $("#reports_dropdown").MPSelect({
             items: [
+                { 'value': 'getting_started', 'label': 'Getting Started'},
                 { 'value': 'groupby', 'label': 'Simple groupBy' },
                 { 'value': 'top_email_providers', 'label': 'Top email providers' },
                 { 'value': 'max_pixels', 'label': 'Max pixels' },
@@ -284,7 +285,7 @@ function mergeInPlace(d1, d2) {
 }
 </script>
 
-<script type="text/cq" id="getting_started_example">
+<script type="text/cq" id="getting_started_query">
 function main() {
   // Take all events in the given date range.
   return Events({
