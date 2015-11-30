@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/css/reset.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.css">
-    <script src="mixpanel-platform.min.js"></script>
+    <script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js"></script>
     <script src="ace/ace.js" type="text/javascript" charset="utf-8"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="stylesheet" type="text/css" href="tooltips.css">
@@ -123,11 +123,8 @@
 
             // Make query
             var dates = $("#dates").val();
-            var params = {
-                "from_date": date_to_string(dates.from),
-                "to_date": date_to_string(dates.to),
-                "params": $("#script_params").val()
-            };
+            var params = JSON.parse($("#script_params").val());
+
             console.log(params)
             MP.api.custom_query(editor.getValue(), params)
                 .done(function(resp) {
