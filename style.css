@@ -60,11 +60,29 @@ h1 {
     visibility: hidden;
 }
 
-#output_container nav div {
+#output_container #tabs .tab {
     float: left;
+    padding: 4px 10px;
+    cursor: pointer;
+    line-height: 24px;
+
+    background-color: #f5f5f5;
+    border: 1px solid #333;
+    border-left: none;
 }
-#output_container nav div.active {
+
+#output_container #tabs .tab:nth-child(1) {
+    border-left: 1px solid #333;
+}
+#output_container #tabs .tab.active {
     font-weight: bold;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+#tabs {
+    z-index: 2;
+    position: relative;
+    top: 1px;
 }
 
 .output_pane {
@@ -74,6 +92,7 @@ h1 {
     padding: 10px;
     border: 1px solid #333;
     display: none;
+    z-index: 1;
 }
 
 .output_pane.active {
@@ -88,7 +107,7 @@ h1 {
     border: 1px solid #333;
 }
 
-#output .spinner_wrapper {
+#output_container .spinner_wrapper {
     text-align: center;
     padding: 20px 0
 }

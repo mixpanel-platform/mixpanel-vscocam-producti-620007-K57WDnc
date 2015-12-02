@@ -45,10 +45,11 @@
 <br />
 
 <div id="output_container">
-    <nav>
-        <div id="json_tab" class="active" data-tab="json">JSON</div>
-        <div id="table_tab" data-tab="table">Table</div>
-    </nav>
+    <div id="tabs">
+        <div id="json_tab" class="tab active" data-tab="json">JSON</div>
+        <div class="tab" data-tab="table">Table</div>
+        <div style="clear: both"></div>
+    </div>
     <div id="output_json" class="output_pane active" data-tab="json"></div>
     <div id="output_table" class="output_pane" data-tab="table"></div>
 </div>
@@ -115,9 +116,9 @@
             set_editor_contents(val);
         });
 
-        $("#output_container nav div").click(function(e) {
+        $("#output_container .tab").click(function(e) {
             var el = $(e.target);
-            $("#output_container nav div").removeClass("active");
+            $("#output_container .tab").removeClass("active");
             el.addClass("active");
 
             var tab = $(e.target).data("tab");
@@ -151,7 +152,12 @@
 
         $("#run_button").on('click', function() {
             // Show spinner while running query
-            $("#output").html(
+            $("#output_json").html(
+                $("<div class='spinner_wrapper'>").append(
+                    $("<img src='ajax-loader-big.gif' />")
+                )
+            );
+            $("#output_table").html(
                 $("<div class='spinner_wrapper'>").append(
                     $("<img src='ajax-loader-big.gif' />")
                 )
@@ -165,7 +171,6 @@
             console.log(params)
             MP.api.custom_query(editor.getValue(), params)
                 .done(function(resp) {
-                    console.log("got", resp);
                     var stringified = JSON.stringify(resp, undefined, 2);
                     set_json_output(stringified);
                     set_table_output(resp);
