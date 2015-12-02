@@ -6,6 +6,7 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.css">
     <script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js?a=1"></script>
     <script src="ace/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="json2csv.js" type="text/javascript" charset="utf-8"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="stylesheet" type="text/css" href="tooltips.css">
 </head>
@@ -43,7 +44,13 @@
 
 <br />
 
-<div id="output"></div>
+<div id="output_container">
+    <nav>
+        <div id="json_tab" class="active" data-tab="json">JSON</div>
+        <div id="table_tab" data-tab="table">Table</div>
+    </nav>
+    <div id="output_json" class="output_pane active" data-tab="json"></div>
+    <div id="output_table" class="output_pane" data-tab="table"></div>
 </div>
 
 <script>
@@ -74,6 +81,8 @@
             add_date_range_to_params(dates.from, dates.to);
         })
 
+        var json_to_csv = new json2csv();
+
         var set_editor_contents = function(query_name) {
             var script = $("#" + query_name + "_query").html();
             var params = JSON.parse($("#" + query_name + "_params").html());
@@ -84,7 +93,7 @@
             var dates = $("#dates").val();
             add_date_range_to_params(dates.from, dates.to);
 
-            $("#output").html('').css('visibility', 'hidden');
+            $("#output_container").css('visibility', 'hidden');
         };
 
         set_editor_contents("getting_started");
@@ -106,11 +115,39 @@
             set_editor_contents(val);
         });
 
-        function set_output(formatted) {
-            $("#output").html(
-                $("<pre>").html(formatted)
+        $("#output_container nav div").click(function(e) {
+            var el = $(e.target);
+            $("#output_container nav div").removeClass("active");
+            el.addClass("active");
+
+            var tab = $(e.target).data("tab");
+            $("#output_container .output_pane").removeClass("active");
+            console.log('#output_container .output_pane[data-tab="' + tab + '"]')
+            $('#output_container .output_pane[data-tab="' + tab + '"]').addClass("active");
+        });
+
+        function set_json_output(formatted) {
+            $("#output_json").html(
+                $("<pre>").text(formatted)
             );
         }
+
+        function set_table_output(json) {
+            var table_data = json_to_csv.jsonToTable(json);
+            var table = $("<table>");
+            for (var i = 0; i < table_data.length; i++) {
+                var tr = $("<tr>");
+                _.each(table_data[i], function(cell) {
+                    var td = $("<td>");
+                    td.text(cell);
+                    tr.append(td);
+                });
+                table.append(tr);
+            }
+            $("#output_table").html(table);
+        }
+
+        var last_response = undefined;
 
         $("#run_button").on('click', function() {
             // Show spinner while running query
@@ -119,7 +156,7 @@
                     $("<img src='ajax-loader-big.gif' />")
                 )
             );
-            $("#output").css('visibility', 'visible');
+            $("#output_container").css('visibility', 'visible');
 
             // Make query
             var dates = $("#dates").val();
@@ -128,8 +165,11 @@
             console.log(params)
             MP.api.custom_query(editor.getValue(), params)
                 .done(function(resp) {
+                    console.log("got", resp);
                     var stringified = JSON.stringify(resp, undefined, 2);
-                    set_output(stringified);
+                    set_json_output(stringified);
+                    set_table_output(resp);
+                    last_response = resp;
                 })
                 .fail(function($xhr) {
                     // Somehow the request is not parsed into JSON event with application/json header
@@ -140,7 +180,7 @@
                     } catch (err) {
                         error_text = $xhr.request.responseText;
                     }
-                    set_output(error_text);
+                    set_json_output(error_text);
                 });
         });
     });
