@@ -15,11 +15,15 @@ var json2csv = function(){};
         var rows = [];
         var columns = {};
         _.each(json, function(doc) {
+            // if the document is not an obj or array,
+            // we need to make it one (so that we have a column)
+            if (!(_.isArray(doc) || _.isObject(doc))) {
+                doc = { value: doc };
+            }
             var d = _flatten(doc);
             _.keys(d).map(function(k) { columns[k] = 1 });
-            rows.push(_flatten(doc));
+            rows.push(d);
         });
-
         columns = _sortColumns(_.keys(columns));
         return _formatTable(columns, rows);
     }
