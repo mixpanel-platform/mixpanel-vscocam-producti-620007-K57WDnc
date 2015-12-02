@@ -50,6 +50,7 @@
         <div class="tab" data-tab="table">Table</div>
         <div style="clear: both"></div>
     </div>
+    <button id="csv_export">Export to CSV</button>
     <div id="output_json" class="output_pane active" data-tab="json"></div>
     <div id="output_table" class="output_pane" data-tab="table"></div>
 </div>
@@ -139,7 +140,10 @@
             for (var i = 0; i < table_data.length; i++) {
                 var tr = $("<tr>");
                 _.each(table_data[i], function(cell) {
-                    var td = $("<td>");
+                    var td = i === 0 ? $("<th>") : $("<td>");
+                    if (cell[0] == '"') {
+                        cell = cell.slice(1, -1);
+                    }
                     td.text(cell);
                     tr.append(td);
                 });
@@ -149,6 +153,11 @@
         }
 
         var last_response = undefined;
+
+        $("#csv_export").on("click", function() {
+            var csv = "data:text/csv;charset=utf-8," + json_to_csv.jsonToCSV(last_response);
+            window.open(encodeURI(csv));
+        });
 
         $("#run_button").on('click', function() {
             // Show spinner while running query
