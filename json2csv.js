@@ -14,6 +14,14 @@ var json2csv = function(){};
     json2csv.prototype.jsonToTable = function(json) {
         var rows = [];
         var columns = {};
+        if (!(_.isArray(json))) {
+            throw new TypeError("must pass in a javascript array");
+        }
+        // [[a, b, c]] array of 1 array is stupid as 1 row,
+        // use multiple for this edge case.
+        if (json.length === 1 && _.isArray(json[0])) {
+            json = json[0];
+        }
         _.each(json, function(doc) {
             // if the document is not an obj or array,
             // we need to make it one (so that we have a column)
